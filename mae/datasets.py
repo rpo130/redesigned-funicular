@@ -58,10 +58,9 @@ def build_pretraining_dataset(args):
     transform = DataAugmentationForMAE(args)
     print("Data Aug = %s" % str(transform))
 
-    cifar10 = torchvision.datasets.CIFAR10(root=pre_dir+'/cnn/data', train=True,
-                                        download=False, transform=transform)
-    # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-    #                                         shuffle=False, num_workers=0)
+    #use cifar10 train data to train mae
+    cifar10 = torchvision.datasets.CIFAR10(root=args.data_path, train=True,
+                                        download=True, transform=transform)
     # return ImageFolder(args.data_path, transform=transform)
     return cifar10
 

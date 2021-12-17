@@ -1,6 +1,6 @@
-torch==1.7.1
-torchvision==0.8.2
-timm==0.3.2
+torch==1.10
+torchvision
+timm
 Pillow
 blobfile
 mypy
@@ -11,4 +11,3 @@ einops
 tensorboardX
 # deepspeed==0.4.0
 scipy
-opencv
