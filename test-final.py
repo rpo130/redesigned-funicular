@@ -34,7 +34,7 @@ pre_dir = os.path.abspath(os.path.join(os.path.realpath(__file__), "../.."))
 
 import sys
 sys.path.append('.')
-from cnn.test import ToRamdomMask, getImshowData, imshow, imshowPIL
+from cnn.predict import ToRamdomMask, getImshowData, imshow, imshowPIL
 
 img_path = current_dir + '/mae/files/0_29.jpg'
 output_dir = current_dir+'/output';
@@ -166,7 +166,7 @@ def mae_reconstruct(args, model, img : torch.Tensor):
 def mae_reconstruct_call(img : torch.Tensor) :
     return mae_reconstruct(args, mae_model, img);
 
-import cnn.test as ct
+import cnn.predict as ct
 class MaeReconstructTrans:
     def __call__(self, pic):
         recimg = mae_reconstruct_call(pic);
@@ -221,8 +221,8 @@ classes = ('plane', 'car', 'bird', 'cat',
 #----------
 
 
-from cnn.test import Net;
-from cnn.test import test_all_data, test_all_detail_data, test_rand_data;
+from cnn.predict import Net;
+from cnn.predict import test_all_data, test_all_detail_data, test_rand_data;
 
 def get_predict(outputs) :
     _, predicted = torch.max(outputs, 1)

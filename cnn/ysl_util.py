@@ -2,6 +2,7 @@ from einops import rearrange
 import numpy as np
 import torch
 from cnn.masking_generator import RandomMaskingGenerator
+import torchvision
 
 def get_masked_pixel(mask_ratio) :
     #生成掩码 #input-size 32 x 32
@@ -51,3 +52,25 @@ def imshow(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 #----------
+
+#随机掩盖图像块
+class ToRamdomMask:
+    def __init__(self, mask_ratio = 0.35) -> None:
+        self.m = get_masked_pixel(mask_ratio=mask_ratio);
+        self.m = self.m.to(torch.bool);
+
+    def __call__(self, pic : torch.Tensor):
+        p = pic.clone();
+        p[self.m] = 0
+        r = p
+        return r;
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+    
+    def refreshM(self, mask_ratio = 0.35) :
+        self.m = get_masked_pixel(mask_ratio=mask_ratio);
+        self.m = self.m.to(torch.bool)
+
+    def getMaskBlock(self) -> torch.Tensor :
+        return self.m

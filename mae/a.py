@@ -32,7 +32,7 @@ pre_dir = os.path.abspath(os.path.join(os.path.realpath(__file__), "../.."))
 
 import sys
 sys.path.append('.')
-from cnn.test import ToRamdomMask
+from cnn.predict import ToRamdomMask
 
 def get_args():
     parser = argparse.ArgumentParser('MAE visualization reconstruction script', add_help=False)
@@ -186,7 +186,7 @@ net = Net()
 #load model
 net.load_state_dict(torch.load(PATH))
 
-from cnn.test import test_all_data;
+from cnn.predict import test_all_data;
 #整体数据验证
 #----
 test_all_data(net)

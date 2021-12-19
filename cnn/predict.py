@@ -7,32 +7,22 @@ from torch._C import import_ir_module
 from torch.utils import data
 import torchvision
 import torchvision.transforms as transforms
-from cnn.ysl_util import get_masked_pixel
+from torchvision.transforms.transforms import ToPILImage
+from cnn.ysl_util import get_masked_pixel, ToRamdomMask
 
 import os
 current_dir = os.path.dirname(os.path.realpath(__file__))
+pre_dir = os.path.abspath(os.path.join(os.path.realpath(__file__), "../.."))
 
-#随机掩盖图像块
-class ToRamdomMask:
-    def __init__(self, mask_ratio = 0.35) -> None:
-        self.m = get_masked_pixel(mask_ratio=mask_ratio);
-        self.m = self.m.to(torch.bool);
-
-    def __call__(self, pic : torch.Tensor):
-        p = pic.clone();
-        p[self.m] = 0
-        r = p
-        return r;
-
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
-    
-    def refreshM(self) :
-        self.m = get_masked_pixel(mask_ratio=0.35);
-        self.m = self.m.to(torch.bool)
-
-    def getMaskBlock(self) -> torch.Tensor :
-        return self.m
+def get_dataloader(data_path) :
+    #需要修改trans，做不同的数据对比
+    testset = torchvision.datasets.CIFAR10(root=data_path, train=False,
+                                           download=False, transform=transform)
+    # testset = torchvision.datasets.CIFAR10(root=data_path, train=False,
+    #                                     download=False, transform=masked_transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                            shuffle=False, num_workers=0)
+    return testloader;
 
 
 transform = transforms.Compose(
@@ -50,15 +40,6 @@ batch_size = 4
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-def get_dataloader(data_path) :
-    #需要修改trans，做不同的数据对比
-    # testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-    #                                        download=False, transform=transform)
-    testset = torchvision.datasets.CIFAR10(root=data_path, train=False,
-                                        download=False, transform=masked_transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                            shuffle=False, num_workers=0)
-    return testloader;
 
 #see data
 #----------
@@ -86,43 +67,22 @@ def imshowPIL(img : PIL.Image.Image):
     plt.show()
 #----------
 
-#set up network
-#----------
-import torch.nn as nn
-import torch.nn.functional as F
 
-
-class Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1) # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+from cnn.net_model import Net;
 
 def restore_model() :
-    PATH = current_dir + '/model/cifar_net.pth'
+    PATH = pre_dir + '/data/cifar10_classify_net.pth'
     net = Net()
     net.load_state_dict(torch.load(PATH))
     return net;
 
-def test_rand_data(net, dataloader, args, compare_trans) :
+def test_rand_data(net, dataloader, args, compare_trans = []) :
     dataiter = iter(dataloader if dataloader is not None else get_dataloader(args.data_path))
     images, labels = dataiter.next()
+    # ToPILImage()(images[0]).save('./a.jpg')
 
     # print images
-    imshow(torchvision.utils.make_grid(images))
+    imshow(torchvision.utils.make_grid(images), unnor=True)
     print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
     #----------
 
@@ -153,7 +113,7 @@ def test_rand_data(net, dataloader, args, compare_trans) :
                                     for j in range(4)))
 
 
-def test_all_data(net, dataloader, args, compare_trans) :
+def test_all_data(net, dataloader, args, compare_trans = []) :
     #整体数据验证
     #----
     compareLen = len(compare_trans) if compare_trans is not None else 0;
@@ -200,11 +160,11 @@ def test_all_data(net, dataloader, args, compare_trans) :
 
     print('Accuracy of the network on the 10000 test images: %d %%' % (
         100 * correct[0] / total[0]))
+    return correct[0] / total[0]
 
 def needPrint(i) :
-    # print(i)
-    if i % 40 == 0:
-        return True;
+    # if i % 40 == 0:
+    #     return True;
     return False;
 
 def test_all_detail_data(net, dataloader):
