@@ -11,7 +11,7 @@ def get_masked_pixel(mask_ratio) :
     masked_patch = masked_position_generator();
     masked_pixel = np.zeros((1,3,4,4));
     for i in masked_patch:
-        if i == 1:
+        if i == 0:
             masked_pixel = np.vstack((masked_pixel, np.zeros((1,3,4,4,))));
         else:
             masked_pixel = np.vstack((masked_pixel, np.ones((1,3,4,4,))));
@@ -25,6 +25,7 @@ def get_masked_pixel(mask_ratio) :
 
     # imshow(torchvision.utils.make_grid(images[0]), images[0] * masked_pixel)
     # imshow(images[0], images[0] * masked_pixel)
+    # c h w
     return masked_pixel;
 
 class ToRamdomMask:

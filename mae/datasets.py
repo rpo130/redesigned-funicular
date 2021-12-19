@@ -15,7 +15,7 @@ from timm.data.constants import \
 
 from timm.data import create_transform
 
-from .masking_generator import RandomMaskingGenerator
+from .masking_generator import BlockDetectGenerator, RandomMaskingGenerator
 from .dataset_folder import ImageFolder
 
 
@@ -26,20 +26,26 @@ class DataAugmentationForMAE(object):
         std = IMAGENET_INCEPTION_STD if not imagenet_default_mean_and_std else IMAGENET_DEFAULT_STD
 
         self.transform = transforms.Compose([
-            transforms.Resize(size=(224,224)),
-            transforms.RandomResizedCrop(args.input_size),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=torch.tensor(mean),
-                std=torch.tensor(std))
+            #TODO 训练时需要修改
+            # transforms.Resize(size=(224,224)),
+            # transforms.RandomResizedCrop(args.input_size),
+            # transforms.ToTensor(),
+            # transforms.Normalize(
+            #     mean=torch.tensor(mean),
+            #     std=torch.tensor(std))
+            # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
 
         self.masked_position_generator = RandomMaskingGenerator(
             args.window_size, args.mask_ratio
         )
+        # self.masked_position_generator = BlockDetectGenerator(
+        #     args.window_size, args.mask_ratio
+        # )
 
     def __call__(self, image):
         return self.transform(image), self.masked_position_generator()
+        # return self.transform(image), self.masked_position_generator(transforms.Resize(size=(224,224))(image))
 
     def __repr__(self):
         repr = "(DataAugmentationForBEiT,\n"

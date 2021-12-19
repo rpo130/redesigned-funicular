@@ -26,15 +26,15 @@ from pathlib import Path
 
 from timm.models import create_model
 
-import utils
-import modeling_pretrain
-from datasets import DataAugmentationForMAE
+import mae.utils as utils
+import mae.modeling_pretrain as modeling_pretrain
+from mae.datasets import DataAugmentationForMAE
 
 from torchvision.transforms import ToPILImage
 from einops import rearrange
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
-def get_args():
+def get_args(args):
     parser = argparse.ArgumentParser('MAE visualization reconstruction script', add_help=False)
     parser.add_argument('img_path', type=str, help='input image path')
     parser.add_argument('save_path', type=str, help='save image path')
@@ -52,8 +52,10 @@ def get_args():
                         help='Name of model to vis')
     parser.add_argument('--drop_path', type=float, default=0.0, metavar='PCT',
                         help='Drop path rate (default: 0.1)')
-    
-    return parser.parse_args()
+    if args is None :
+        return parser.parse_args()
+    else :
+        return parser.parse_args(args)
 
 
 def get_model(args):
@@ -92,7 +94,7 @@ def main(args):
 
     transforms = DataAugmentationForMAE(args)
     # print(type(img))
-    img.resize((224, 224),Image.ANTIALIAS)
+    # img.resize((224, 224),Image.ANTIALIAS)
     img, bool_masked_pos = transforms(img)
     bool_masked_pos = torch.from_numpy(bool_masked_pos)
 
@@ -113,6 +115,8 @@ def main(args):
         img_squeeze = rearrange(ori_img, 'b c (h p1) (w p2) -> b (h w) (p1 p2) c', p1=patch_size[0], p2=patch_size[0])
         img_norm = (img_squeeze - img_squeeze.mean(dim=-2, keepdim=True)) / (img_squeeze.var(dim=-2, unbiased=True, keepdim=True).sqrt() + 1e-6)
         img_patch = rearrange(img_norm, 'b n p c -> b n (p c)')
+
+
         img_patch[bool_masked_pos] = outputs
 
         #make mask
