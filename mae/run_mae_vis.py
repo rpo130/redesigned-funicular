@@ -25,6 +25,7 @@ from PIL import Image
 from pathlib import Path
 
 from timm.models import create_model
+from torchvision import transforms
 
 import mae.utils as utils
 import mae.modeling_pretrain as modeling_pretrain
@@ -32,7 +33,7 @@ from mae.datasets import DataAugmentationForMAE
 
 from torchvision.transforms import ToPILImage
 from einops import rearrange
-from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_STD
 
 def get_args(args):
     parser = argparse.ArgumentParser('MAE visualization reconstruction script', add_help=False)
@@ -92,10 +93,9 @@ def main(args):
         img.convert('RGB')
         print("img path:", args.img_path)
 
-    transforms = DataAugmentationForMAE(args)
-    # print(type(img))
-    # img.resize((224, 224),Image.ANTIALIAS)
-    img, bool_masked_pos = transforms(img)
+    tran_mae = DataAugmentationForMAE(args)
+
+    img, bool_masked_pos = tran_mae(img)
     bool_masked_pos = torch.from_numpy(bool_masked_pos)
 
     with torch.no_grad():
@@ -105,9 +105,12 @@ def main(args):
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
         outputs = model(img, bool_masked_pos)
 
+        DATA_MEAN = (0.5,0.5,0.5)
+        DATA_STD = (0.5,0.5,0.5)
+
         #save original img
-        mean = torch.as_tensor(IMAGENET_DEFAULT_MEAN).to(device)[None, :, None, None]
-        std = torch.as_tensor(IMAGENET_DEFAULT_STD).to(device)[None, :, None, None]
+        mean = torch.as_tensor(DATA_MEAN).to(device)[None, :, None, None]
+        std = torch.as_tensor(DATA_STD).to(device)[None, :, None, None]
         ori_img = img * std + mean  # in [0, 1]
         img = ToPILImage()(ori_img[0, :])
         img.save(f"{args.save_path}/ori_img.jpg")
@@ -117,6 +120,7 @@ def main(args):
         img_patch = rearrange(img_norm, 'b n p c -> b n (p c)')
 
 
+        #TODO need to construct using the same distribution but block are can't infer
         img_patch[bool_masked_pos] = outputs
 
         #make mask
@@ -133,7 +137,7 @@ def main(args):
         img.save(f"{args.save_path}/rec_img.jpg")
 
         #save random mask img
-        img_mask = rec_img * mask
+        img_mask = ori_img * mask
         img = ToPILImage()(img_mask[0, :])
         img.save(f"{args.save_path}/mask_img.jpg")
 
