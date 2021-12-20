@@ -29,11 +29,11 @@ class DataAugmentationForMAE(object):
             #TODO 训练时需要修改
             transforms.Resize((args.input_size,args.input_size)),
             # transforms.RandomResizedCrop(args.input_size),
-            transforms.ToTensor(),
+            # transforms.ToTensor(),
             # transforms.Normalize(
             #     mean=torch.tensor(mean),
             #     std=torch.tensor(std))
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
 
         self.masked_position_generator = RandomMaskingGenerator(

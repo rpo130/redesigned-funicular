@@ -38,14 +38,15 @@ from cnn.predict import ToRamdomMask, getImshowData, imshow, imshowPIL
 
 img_path = current_dir + '/mae/files/0_29.jpg'
 output_dir = current_dir+'/output';
-# model_path = 'D:\OneDrive\研究生\模式识别\大作业\pretrain_mae_vit_base_mask_0.75_400e.pth';
-model_path = 'D:\OneDrive\研究生\模式识别\大作业\cifar10-model\checkpoint-159.pth';
+model_path = 'D:\OneDrive\研究生\模式识别\大作业\pretrain_mae_vit_base_mask_0.75_400e.pth';
+# model_path = 'D:\OneDrive\研究生\模式识别\大作业\cifar10-model\checkpoint-159.pth';
 data_path = 'D:\OneDrive\研究生\模式识别\大作业\src\cnn\data';
 cnn_model_path = 'D:\OneDrive\研究生\模式识别\大作业\src\cnn\model\cifar_net.pth'
 device_type = 'cpu';
 
 args = mae.run_mae_vis.get_args([img_path, output_dir, model_path,
                                  "--device", device_type,
+                                 "--mask_ratio", "0.6"
                                 ]);
 
 args.data_path = data_path
@@ -163,8 +164,10 @@ def mae_reconstruct(args, model, img : torch.Tensor):
 
         return ret_img
 
+from mae.rebuild import rebuild_pic_single
 def mae_reconstruct_call(img : torch.Tensor) :
-    return mae_reconstruct(args, mae_model, img);
+    # return mae_reconstruct(args, mae_model, img);
+    return rebuild_pic_single(args, mae_model, img);
 
 import cnn.predict as ct
 class MaeReconstructTrans:
@@ -193,12 +196,18 @@ masked_transform = transforms.Compose(
 initial_transform = transforms.Compose(
     [
         # transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
      ])
+
+import trans
+EARSE_NUM = [0, 0, 0]
+MASK_PERCENT = 0.6;
 
 block_transform = transforms.Compose(
     [
-    ToRamdomMask()
+    # ToRamdomMask()
+                trans.RandomErasing(probability=1,sl=MASK_PERCENT,sh=MASK_PERCENT,r1=1, mean=EARSE_NUM)
+
     ]
 )
 
@@ -236,15 +245,9 @@ def basic_trans(img : torch.Tensor) -> torch.Tensor :
 
 def block_trans(img : torch.Tensor) -> tuple :
     c = torch.zeros_like(img);
-    m = torch.zeros_like(img, dtype=torch.bool);
-
-    maskG = ToRamdomMask(mask_ratio=0.2)
     for i in range(len(img)):
-        c[i] = maskG(img[i]);
-        m[i] = maskG.getMaskBlock().clone();
-        maskG.refreshM();
-        # c[i] = block_transform(img[i])
-    return c, m;
+        c[i] = block_transform(img[i])
+    return c;
 
 def mae_recons(img : torch.Tensor) :
     c = torch.zeros((batch_size,3, 32, 32))
@@ -296,7 +299,7 @@ if __name__ == '__main__':
 
         #mask
         #-----------------------------------------------------------
-        images_block, mask_block = block_trans(images_basic);
+        images_block = block_trans(images_basic.clone())
         #unnormalize 会导致黑块消失
         # imshow(torchvision.utils.make_grid(images_block), unnor=True)
 
