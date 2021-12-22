@@ -18,8 +18,13 @@ pre_dir = os.path.abspath(os.path.join(os.path.realpath(__file__), "../.."))
 
 if __name__=='__main__':
     # img_path = './data/0_29.jpg'
-    img_path =  "./data/ILSVRC2012_val_00031649.JPEG"
+    # img_path = './data/9_9947.jpg'
+    # img_path = './data/0_1811.jpg'
+    # img_path =  "./data/ILSVRC2012_val_00031649.JPEG"
     # img_path =  "./data/a.jpg"
+    # img_path =  "./data/a1.jpg"
+    img_path =  "./data/a2.jpg"
+    # img_path =  "./data/b.jpg"
     output_dir = current_dir+'/output';
     # model_path = 'D:\OneDrive\研究生\模式识别\大作业\pretrain_mae_vit_base_mask_0.75_400e.pth';
     model_path = 'D:\OneDrive\研究生\模式识别\大作业\cifar10-model\checkpoint-159.pth';
